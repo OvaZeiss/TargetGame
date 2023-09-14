@@ -1,0 +1,28 @@
+#canvas1{
+    width: 800px;
+    height: 600px;
+    padding: 30px;
+}
+
+.gameHeader{
+    border: 2px outset black;
+    background-color: grey;
+    text-align: center;
+    width: 800px;
+    height: 100px; 
+    font-family: "Lucida Console", "Courier New", monospace;       
+    font-size: 24;
+    color: black;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;   
+}
+
+.gameCanvas{
+    border: 2px outset black;
+    background-color: rgb(0,25,40);
+    text-align: center;
+    width: 800px;
+    height: 600px;        
+}
