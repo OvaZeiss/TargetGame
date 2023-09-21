@@ -1,7 +1,7 @@
 //define the size of the target game canvas
 const WIDTH:number = 800, HEIGHT:number = 600
 //define Target's colors
-const TargetColor2:string = "white", TargetColor1:string = "red", BackgroundColor:string = "black"
+const TargetColor2:string = "white", TargetColor1:string = "red", BackgroundColor:string = "rgb(0,25,40)"
 
 type Context = CanvasRenderingContext2D;
 
@@ -13,6 +13,7 @@ class Target{
     maxSize:number = 30;
     size:number = 0;
     grow:boolean = true;
+    context: CanvasRenderingContext2D;
 
     constructor(x:number, y:number){
         this.x = x;
@@ -22,31 +23,42 @@ class Target{
     update(): void{
         if( this.size + this.grothRate >= this.maxSize){
             this.grow = false;
-        }
+        };
         if(this.grow){
             this.size += this.grothRate;} else 
             {
                 this.size -= this.grothRate;
-        }
+        };
     }
 
     collide(x: number, y:number): boolean{
-        const distance = Math.sqrt((this.x - x)**2 + (this.y - y)**2)
+        const distance: number = Math.sqrt((this.x - x)**2 + (this.y - y)**2)
         return distance <= this.size
     }
 
     //function that draws a target
-    drawTarget(context: Context){
+    drawTarget(){
         //const x:number = Math.random()*600 + 30;
         //const y:number = Math.random()*400 + 30;
-        drawCircle(this.x, this.y, this.size * 1.2, TargetColor1, context);
-        drawCircle(this.x, this.y, this.size, TargetColor2, context);
-        drawCircle(this.x, this.y, this.size * 0.8, TargetColor1, context);
-        drawCircle(this.x, this.y, this.size * 0.6, TargetColor2, context);
-    }    
+        
+        drawCircle(this.x, this.y, this.size * 1.2, TargetColor1, this.context);
+        drawCircle(this.x, this.y, this.size, TargetColor2, this.context);
+        drawCircle(this.x, this.y, this.size * 0.8, TargetColor1, this.context);
+        drawCircle(this.x, this.y, this.size * 0.6, TargetColor2, this.context);
+     
+        if( this.size + this.grothRate >= this.maxSize){
+            this.grow = false;
+        }else{
+            this.size = this.size + this.grothRate;
+        };
+        if(this.grow){
+            this.size += this.grothRate;} else 
+            {
+                this.size -= this.grothRate;
+        };      
+    }; 
+
 }
-
-
 
 //define a function that draws a circle
 function drawCircle(x:number, y:number, z: number, color: string, context: Context){
@@ -58,42 +70,129 @@ function drawCircle(x:number, y:number, z: number, color: string, context: Conte
 
 // change
 function main() {
+    //control boolean to stop the flow in some cases
+    let run: boolean = true;
+    //a list with the targets on the screen
     let targets: Target[] = [];
-    //clock = pygame.time.Clock()
+    //how manny targets were succsessfully pressed
     let target_pressed:number = 0
-    let clicks:number = 0
-    let start_time:Date = new Date(Date.now());
-    let misses:number = 0  ;
-    let run = true;
+    //how many clicks
+    let clicks: number = 0
     let click: boolean = false;
+    //how manny clicks outside the target
+    let misses: number = 0  ;
+    let start_time: Date = new Date(Date.now());
+    //mouse position when user clicks
     let mousePosX:number , mousePosY:number;
+    //Lives
+    let lives:number = 3;
 
-    while (run) {
-        //clock.tick(60)
+    //Calculate the elapsed time
+    //
+    const startTime = performance.now();
+
+    const displayElapsedTime = () => {
+    const currentTime = performance.now();
+    const elapsedTime = currentTime - startTime;
+    
+    const minutes: number = Math.floor(elapsedTime / 60000);
+    const strMinutes: string = (minutes < 10) ? '0' + minutes : JSON.stringify(minutes);
+      
+    const seconds: number = Math.floor((elapsedTime % 60000) / 1000);
+    const strSeconds: string = (seconds < 10) ? '0' + seconds : JSON.stringify(seconds%100);
+    const milisecondLength: number = JSON.stringify(Math.floor(elapsedTime)).length;
+
+    const milliseconds: string = JSON.stringify(Math.floor(elapsedTime)).slice(milisecondLength - 3, milisecondLength - 2);
+    
+    
+    // Display the elapsed time.
+    if(run){
+        document.querySelector(".elapsedTime").textContent = `${strMinutes}:${strSeconds}:${milliseconds}`;
+        document.querySelector(".lives").textContent = `${lives}`;
+     };
+};
+    
+    const interval = setInterval(displayElapsedTime, 1);
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      // Clear the interval when the page is closed.
+      window.addEventListener("unload", () => {
+        clearInterval(interval);
+      });
+    });
+    
+
+
+   // while (run) {
         click = false;
-        //mouse_position = pygame.mouse.get_pos()
-        //let diff = (Date.now() - start_time);
-        //let elapsed_time = Math.floor((diff % (1000 * 60)) / 1000);
-       
-        let myTarget: Target = new Target(Math.random()*600 + 30, Math.random()*400 + 30);
-        const myCanvas = document.querySelector("#canvas1");        
+        //get canvas
+        const myCanvas = document.querySelector(".canvas1");        
+        //get context
         if ((myCanvas as HTMLCanvasElement).getContext) {
             const ctx = (myCanvas as HTMLCanvasElement).getContext("2d");
-            //ctx.fillStyle = "rgb(0,25,40)";
-            //ctx.fillRect(0, 0, WIDTH, HEIGHT);
-            let i:number = 0;
-            while( i < 200){
-                i += 1;
-                setTimeout(() => {
-                    myTarget.update();
-                    myTarget.drawTarget(ctx);
-                  }, 900);   
-            } ;                                       
-        } 
+            //create a target
+            let myTarget: Target = new Target(Math.random()*650 + 30, Math.random()*450 + 30);
+            myTarget.context = ctx;
+            //Add target to an array of targets
+            targets.push(myTarget);
+            //Animate target
+            function AnimateTarget(){
+                myTarget.update(); 
+                if(!myTarget.grow){
+                    drawCircle(myTarget.x, myTarget.y, 36, BackgroundColor, myTarget.context);
+                }    
+                
+                if (myTarget.size >= 0) {
+                    myTarget.drawTarget();
+                    requestAnimationFrame(AnimateTarget);
+                };            
+            };
+            AnimateTarget(); 
+            console.log('grow '+ myTarget.grow);
+            if(!myTarget.grow){
+                drawCircle(myTarget.x, myTarget.y, myTarget.size * 1.25, BackgroundColor, myTarget.context);
+                if(myTarget.size < 0.2){
+                    run = false;
+                };
+    
+            };                        
 
-        break; 
-    };
-    /*    for event in pygame.event.get():
+            const gameCanvas = document.querySelector('.gameCanvas');
+            gameCanvas.addEventListener("click", function(event:MouseEvent) {
+            //gameCanvas.onclick = function(event) {
+
+                const mouseX = event.clientX;
+                const mouseY = event.clientY;
+            
+                //for(let i = 0; i < targets.length; i++){
+                    let i = 0;
+                    while(i < targets.length && targets[i] !== null){
+                    console.log('y '+ (targets[i].y + 70));
+                    if(targets[i].collide(mouseX  , mouseY - 100)){
+                        drawCircle(targets[i].x, targets[i].y, targets[i].size * 1.25, BackgroundColor, targets[i].context);
+                        targets[i].size = 0;
+                        targets.splice(i,1);
+                        run = false;
+                    };
+                    i++;
+                };
+            });          
+       // ); 
+        };
+    //};
+    //stop execution with ctrl+q
+    document.addEventListener("keydown", function(event) {
+        // Check if the `Ctrl` key is pressed and the `keyCode` is 81.
+        if (event.ctrlKey && event.key === 'q') {
+            console.log('s-a apasat ctrl q');
+          run = false;
+        };
+      });  
+      
+        
+          
+    /*
+        for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 break
