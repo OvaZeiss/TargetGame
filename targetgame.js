@@ -16,14 +16,12 @@ var Target = /** @class */ (function () {
         if (this.size + grothRate >= maxSize) {
             this.grow = false;
         }
-        ;
         if (this.grow) {
             this.size += grothRate;
         }
         else {
             this.size -= grothRate;
         }
-        ;
     };
     Target.prototype.collide = function (x, y) {
         var distance = Math.sqrt(Math.pow((this.x - x), 2) + Math.pow((this.y - y), 2));
@@ -31,10 +29,10 @@ var Target = /** @class */ (function () {
     };
     //function that draws a target
     Target.prototype.drawTarget = function () {
+        //if target is shrinking, I delete first the target and redraw again
         if (!this.grow) {
             drawCircle(this.x, this.y, this.size * 1.2 + 1, BackgroundColor, this.context);
         }
-        ;
         drawCircle(this.x, this.y, this.size * 1.2, TargetColor1, this.context);
         drawCircle(this.x, this.y, this.size, TargetColor2, this.context);
         drawCircle(this.x, this.y, this.size * 0.8, TargetColor1, this.context);
@@ -42,19 +40,20 @@ var Target = /** @class */ (function () {
         // Call update to calculate the new target size
         this.update();
     };
-    ;
     return Target;
 }());
+// ------ End Target Class-----
 //define a function that draws a circle
 function drawCircle(x, y, z, color, context) {
     context.beginPath();
-    context.arc(x, y, Math.abs(z), 0, Math.PI * 2, true);
+    context.arc(x, y, z < 0 ? 0 : z, 0, Math.PI * 2, true);
     context.fillStyle = color;
     context.fill();
 }
-;
 function CreateNewTarget(context) {
-    var myTarget = new Target(Math.random() * 650 + 30, Math.random() * 450 + 30);
+    var myTarget = new Target(
+    //maxSize added in case random is 0
+    Math.random() * 700 + maxSize, Math.random() * 500 + maxSize);
     myTarget.context = context;
     return myTarget;
 }
@@ -64,14 +63,14 @@ function gameOver() {
     ctx.fillStyle = BackgroundColor;
     // Fill the canvas with the current fill style
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    ctx.font = ("50px serif");
-    ctx.fillStyle = 'white';
-    ctx.fillText('Game Over', WIDTH / 2 - 100, HEIGHT / 2);
-    ctx.font = ("18px serif");
-    ctx.fillText('Press r to restart', WIDTH / 2 - 50, HEIGHT / 2 + 50);
+    ctx.font = "50px serif";
+    ctx.fillStyle = "white";
+    ctx.fillText("Game Over", WIDTH / 2 - 100, HEIGHT / 2);
+    ctx.font = "18px serif";
+    ctx.fillText("Press r to restart", WIDTH / 2 - 50, HEIGHT / 2 + 50);
 }
 function GetContext() {
-    var gameCanvas = document.querySelector('.canvas1');
+    var gameCanvas = document.querySelector(".canvas1");
     var ctx = gameCanvas.getContext("2d");
     return ctx;
 }
@@ -97,22 +96,21 @@ function main() {
     var TargetsPerSecond = 2;
     //context
     var ctx;
-    //Calculate the elapsed time    
+    //Calculate the elapsed time
     var startTime = performance.now();
     var displayElapsedTime = function () {
         var currentTime = performance.now();
         var elapsedTime = currentTime - startTime;
         var minutes = Math.floor(elapsedTime / 60000);
-        var strMinutes = (minutes < 10) ? '0' + minutes : JSON.stringify(minutes);
+        var strMinutes = minutes < 10 ? "0" + minutes : JSON.stringify(minutes);
         var seconds = Math.floor((elapsedTime % 60000) / 1000);
-        var strSeconds = (seconds < 10) ? '0' + seconds : JSON.stringify(seconds % 100);
+        var strSeconds = seconds < 10 ? "0" + seconds : JSON.stringify(seconds % 100);
         var milisecondLength = JSON.stringify(Math.floor(elapsedTime)).length;
         var milliseconds = JSON.stringify(Math.floor(elapsedTime)).slice(milisecondLength - 3, milisecondLength - 2);
         // Display the elapsed time.
         if (run) {
             document.querySelector(".elapsedTime").textContent = "".concat(strMinutes, ":").concat(strSeconds, ":").concat(milliseconds);
         }
-        ;
     };
     document.querySelector(".missed").textContent = "".concat(misses);
     document.querySelector(".hits").textContent = "".concat(target_pressed);
@@ -136,27 +134,24 @@ function main() {
                             targets[i].drawTarget();
                             requestId = requestAnimationFrame(AnimateTarget);
                         }
-                        ;
                     }
-                    ;
                 }
-                ;
             }
-            ;
             if (run) {
                 AnimateTarget();
             }
-            ;
-            //Is target shrinking ? 
+            //Is target shrinking ?
             if (!targets[i].grow && run === true) {
                 if (targets[i].size <= grothRate) {
-                    // target shrinking and size 0 then delete the target from the screnn and from targets array
+                    // target shrinking and size 0 then delete the target from the screnn 
                     drawCircle(targets[i].x, targets[i].y, Math.abs(targets[i].size * 1.25), BackgroundColor, targets[i].context);
+                    //target reached 0 size, one life lost
                     lives -= 1;
                     document.querySelector(".lives").textContent = "".concat(lives);
+                    //delete target from targets array
                     targets[i] = null;
                     targets.splice(i, 1);
-                    // if no more lives => game over                       
+                    // if no more lives => game over
                     if (lives === 0) {
                         gameOver();
                         targets = null;
@@ -165,9 +160,7 @@ function main() {
                         return { value: void 0 };
                     }
                 }
-                ;
             }
-            ;
         };
         //Animate targets
         for (var i = 0; i < targets.length; i += 1) {
@@ -175,17 +168,16 @@ function main() {
             if (typeof state_1 === "object")
                 return state_1.value;
         }
-        ;
     };
-    //set timer for target creation  
+    //set timer for target creation
     setInterval(function () {
         if (run) {
             CreateAndAnimateTarget();
         }
     }, 800);
-    //Add a listner for mouse click. 
-    //If the click is on a target, the target should be deleted from screen and targets array                
-    var gameCanvas = document.querySelector('.gameCanvas');
+    //Add a listner for mouse click.
+    //If the click is on a target, the target should be deleted from screen and targets array
+    var gameCanvas = document.querySelector(".gameCanvas");
     gameCanvas.addEventListener("click", function (event) {
         var mouseX = event.clientX;
         var mouseY = event.clientY;
@@ -201,10 +193,8 @@ function main() {
                     targets.splice(i, 1);
                     clickOnTarget = true;
                 }
-                ;
                 i++;
             }
-            ;
             if (!clickOnTarget) {
                 misses += 1;
                 document.querySelector(".missed").textContent = "".concat(misses);
@@ -212,9 +202,7 @@ function main() {
             else {
                 clickOnTarget = false;
             }
-            ;
         }
-        ;
     });
     document.addEventListener("DOMContentLoaded", function () {
         // Clear the interval when the page is closed.
@@ -226,24 +214,36 @@ function main() {
     //stop execution with ctrl+q
     document.addEventListener("keydown", function (event) {
         // Check if the `Ctrl` key is pressed and the `keyCode` is 81.
-        if (event.ctrlKey && event.key === 'q') {
-            console.log('s-a apasat ctrl q');
+        if (event.ctrlKey && event.key === "q") {
+            console.log("s-a apasat ctrl q");
             run = false;
         }
-        ;
     });
     //restart game
     document.addEventListener("keydown", function (event) {
         // Check if the `r` key is pressed
-        if (event.key === 'r') {
-            ctx = GetContext();
-            // Set the fill style to background color
-            ctx.fillStyle = BackgroundColor;
-            // Fill the canvas with the current fill style
-            ctx.fillRect(0, 0, WIDTH, HEIGHT);
-            document.location.reload();
+        switch (event.key) {
+            //pause
+            case ' ':
+            case 'p': {
+                if (lives > 0) {
+                    run = !run;
+                    break;
+                }
+            }
+            //restart
+            case 'r': {
+                ctx = GetContext();
+                // Set the fill style to background color
+                ctx.fillStyle = BackgroundColor;
+                // Clear screen by filling it with background color
+                ctx.fillRect(0, 0, WIDTH, HEIGHT);
+                document.location.reload();
+                break;
+            }
+            default:
+                console.log('key ', event.key);
         }
-        ;
     });
     return;
 }
